@@ -2,12 +2,13 @@
 const UserModel = require("../models/userModel");
 const jwt = require("jsonwebtoken");
 const util=require("util")
+const { SECRET_KEY}=process.env;
 const signup = async (req, res) => {
   try {
     const userobj = new UserModel(req.body);
     console.log(userobj);
     const payload=req.body.email;
-  const token=jwt.sign(payload,"secretkey")
+  const token=jwt.sign(payload,SECRET_KEY)
     const result = await userobj.save();
     res.status(200).send(token);
   } catch (err) {
@@ -22,7 +23,7 @@ const login = async (req, res) => {
       const user = email.password;
       if (user == req.body.password) {
         const payload=req.body.email;
-        const token=jwt.sign(payload,"secretkey")
+        const token=jwt.sign(payload,SECRET_KEY)
         res.status(200).send(token);
       } else {
         res.status(403).send("password incorrect!");
@@ -94,25 +95,28 @@ const allusers = async (req, res) => {
 
 
 const protect=async(req,res,next)=>{
-  
+  try{
  const testtoken=req.headers.authorization;
 
  let token;
  if(testtoken){
   token=testtoken.split(' ')[1];
-  res.send(token);
+ 
  }
 if(!token){
 next("no token provided")
 }
-// const decodedtoken=await util.promisify(jwt.verify)(token,"secretkey")
-jwt.verify(token,"secretkey", (err,user) => {
- const t= jwt.verify(token,"secretkey");
- console.log(t)
 
 
-})
-// console.log(decodedtoken)
+ const decodedtoken= jwt.verify(token,SECRET_KEY);
+ console.log("after verify",decodedtoken)
+ next()
+  }
+  catch(err){
+    res.status(500).send(err)
+  }
+
+  
 
 
 }
